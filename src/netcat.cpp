@@ -15,7 +15,7 @@ using namespace std;
 // Print help
 void help() {
     cout << "mync 0.1.0" << endl
-         << "usage: hana [-Bhlnuvz] [-e executable] [-p port]" << endl
+         << "usage: mync [-Bhlnuvz] [-e executable] [-p port]" << endl
          << "            [destination] [port]" << endl
          << "options:" << endl
          << "      -B            base64 encode/decode TODO" << endl
