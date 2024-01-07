@@ -126,32 +126,31 @@ int Socket::serve(int port)
     return this->sock;
 }
 
-void Socket::deliver(string data)
+void Socket::deliver(char *data, int len)
 {
     if (!this->open) {
         return;
     }
     int result;
-    result = send(this->sock, data.c_str(), data.length(), 0);
+    result = send(this->sock, data, len, 0);
     
     if (result <= 0) {
         this->open = false;
     }
 }
 
-string Socket::receive()
+int Socket::receive(char *buf, int len)
 {
     if (!this->open) {
-        return "";
+        return 0;
     }
     int result;
-    result = recv(this->sock, this->buffer, 8196, 0);
+    result = recv(this->sock, buf, len, 0);
     if (result <= 0) {
         this->open = false;
-        return "";
+        return 0;
     }
-    string str = this->buffer;
-    return str;
+    return result;
 }
 
 void Socket::copy_fd(int fd)

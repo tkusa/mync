@@ -10,7 +10,6 @@ class Socket
 private:
     int sock;
     int connection_fd;
-    char buffer[8196] = {0};
     char * rhost;
     int rport;
     bool open = false;
@@ -23,8 +22,8 @@ public:
     bool isUdp();
     int create(char *ip_addr, int port);
     int serve(int port);
-    void deliver(string data);
-    string receive();
+    void deliver(char *data, int len);
+    int receive(char *buf, int len);
     void copy_fd(int fd);
     int finish();
 };

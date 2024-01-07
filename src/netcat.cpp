@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstring>
 #include <string>
 #include <unistd.h>
@@ -14,7 +15,7 @@ using namespace std;
 // Print help
 void help() {
     cout << "mync 0.1.0" << endl
-         << "usage: mync [-Bhlnuvz] [-e executable] [-p port]" << endl
+         << "usage: hana [-Bhlnuvz] [-e executable] [-p port]" << endl
          << "            [destination] [port]" << endl
          << "options:" << endl
          << "      -B            base64 encode/decode TODO" << endl
@@ -23,7 +24,6 @@ void help() {
          << "      -l            listen mode" << endl
          << "      -n            avoid name resolution" << endl
          << "      -p port       custom port" << endl
-         << "      -U file       upload local file TODO" << endl
          << "      -u            udp mode" << endl
          << "      -v            verbose output" << endl
          << "      -z            zero I/O" << endl
@@ -33,7 +33,7 @@ void help() {
 // Execute program
 void execute(Socket* socket, char* exec) {
     // close socket and copy fd
-    socket->copy_fd(0);
+    socket->copy_fd(STDIN_FILENO);
     char * p = strrchr(exec, '/');
     if (p) {
         p++;
@@ -46,39 +46,33 @@ void execute(Socket* socket, char* exec) {
 
 // Receive data from socket
 void listen_connection(Socket* socket) {
-    string buf;
     while (true) {
-        buf = "";
         // stop if socket is closed
         if (!socket->isOpen()) {
             break;
         }
+        char buf[1] = {0};
+        int len;
         // receive data
-        buf = socket->receive();
-        cout << buf;
+        len = socket->receive(buf, sizeof(buf));
+        cout.write(buf, len);
     }
 }
 
 // Send data from socket
 void client_connection(Socket* socket) {
-    string buf;
     while (true) {
-        buf = "";
-        string tmp;
-        bool eof = false;
-        // read line and flg if EOF
-        if (!getline(cin, tmp)) {
-            eof = true;
-        }
-        buf += tmp + "\n";
+        char buf[1] = {0};
+        int len;
+        cin.read(buf, 1);
+        len = cin.gcount();
         // stop if socket is closed
         if (!socket->isOpen()) {
-            break;
+            return;
         }
         // send data
-        socket->deliver(buf);
-        // finish if EOF
-        if (eof) {
+        socket->deliver(buf, len);
+        if (cin.eof()) {
             break;
         }
     }
@@ -95,19 +89,17 @@ int main(int argc, char** argv) {
     char * host = DEFAULT_HOST;
     int port;
     char * exec;
-    char * file;
     // flags
     bool b64_flg = false;
     bool exec_flg = false;
     bool listen_flg = false;
     bool name_flg = false;
-    bool upload_flg = false;
     bool udp_flg = false;
     bool verbose_flg = false;
     bool zero_flg = false;
 
     // parse args
-    while ((x = getopt(argc, argv, "Be:hlnp:U:uvz")) != EOF) {
+    while ((x = getopt(argc, argv, "BD:e:hlnp:U:uvz")) != EOF) {
         switch (x) {
             case 'B': // base64 encode
                 b64_flg = true;
@@ -129,10 +121,6 @@ int main(int argc, char** argv) {
                 if (optarg != NULL) {
                     port = atoi(optarg);
                 }
-                break;
-            case 'U': // file upload
-                upload_flg = true;
-                file = optarg;
                 break;
             case 'u': // udp
                 udp_flg = true;
